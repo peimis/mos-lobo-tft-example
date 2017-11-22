@@ -239,15 +239,18 @@ void tft_init(void)
 
 }
 
+uint8_t fg_r=100, fg_g=50;
 
 void button1_cb(bool state)
 {
 	printf("Button1 event %d\n", state);
+	fg_r += 30;
 }
 
 void button2_cb(bool state)
 {
 	printf("Button2 event %d\n", state);
+	fg_g += 30;
 }
 
 void mgos_tft_print_date( int x,  int y,  int font);
@@ -256,22 +259,20 @@ void sntp_cb(void *arg, double delta)
 {
 	(void)delta;
 
-	TFT_setFont(MINYA24_FONT, NULL);
-	_fg = TFT_RED;
-
 	mgos_tft_print_date(32, 205, MINYA24_FONT);
 }
 
-
+//
+//
 void mgos_tft_print_date( int x,  int y,  int font)
 {
 	char tmp_buff[32];
 	int tx, ty;
 
 	double mg_now = mg_time();
-	time_t now=time(0);
-	struct tm* tm_info = localtime(&now);
-	int ms = (int)((mg_now - (int)(mg_now)) * 1000);
+	time_t now = 2*60*60 + time(0);
+	struct tm* tm_info = gmtime(&now);
+//	int ms = (int)((mg_now - (int)(mg_now)) * 1000);
 
 	if (TFT_read_touch(&tx, &ty, false))
 	{
@@ -284,11 +285,13 @@ void mgos_tft_print_date( int x,  int y,  int font)
 	{
 		TFT_setFont(font, NULL);
 	}
-	_fg = TFT_RED;
+	_fg = (color_t){ fg_r, fg_g, 192 };
+	_bg = TFT_BLACK;
 
-	printf("mgos_tft_print_date mg_time=%f ms=%d (%d,%d)\n", mg_now, ms, tx, ty);
+	printf("mgos_tft_print_date mg_time=%f (%d,%d)\n", mg_now, tx, ty);
 
-	sprintf(tmp_buff, "%2d.%2d  %02d:%02d:%02d.%03d", tm_info->tm_mday, 1+tm_info->tm_mon, tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec, ms);
+	sprintf(tmp_buff, "%2d.%2d  %02d:%02d:%02d", tm_info->tm_mday, 1+tm_info->tm_mon, tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec);
+	TFT_clearStringRect(x, y, tmp_buff);
 	TFT_print(tmp_buff, x, y);
 }
 
