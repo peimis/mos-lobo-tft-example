@@ -21,14 +21,19 @@
 
 // #include "spiffs_vfs.h"
 
-
 // ==================================================
 // Define which spi bus to use VSPI_HOST or HSPI_HOST
 #define SPI_BUS VSPI_HOST
 
 button_t button1;
-const char* btext = "Button";
+const char* btext1 = "Button1";
 
+button_t button2;
+const char* btext2 = "Button2";
+
+
+void button1_cb(bool state);
+void button2_cb(bool state);
 
 
 void tft_init(void)
@@ -93,10 +98,12 @@ void tft_init(void)
     spi_lobo_device_handle_t tsspi = NULL;
 
     spi_lobo_device_interface_config_t tsdevcfg={
-        .clock_speed_hz=2500000,                // Clock out at 2.5 MHz
-        .mode=0,                                // SPI mode 0
-        .spics_io_num=-1,   		            // Touch CS pin
-		.spics_ext_io_num=PIN_NUM_TCS,          // Using the external CS
+        .clock_speed_hz=2500000,                //Clock out at 2.5 MHz
+        .mode=0,                                //SPI mode 0
+//        .spics_io_num=PIN_NUM_TCS,              //Touch CS pin
+//		.spics_ext_io_num=-1,                   //Not using the external CS
+        .spics_io_num=-1,   		            //Touch CS pin
+		.spics_ext_io_num=PIN_NUM_TCS,          //Not using the external CS
 		//.command_bits=8,                      //1 byte command
     };
 #elif USE_TOUCH == TOUCH_TYPE_STMPE610
@@ -184,24 +191,35 @@ void tft_init(void)
 	printf("Graphics demo started\r\n");
 	printf("---------------------\r\n");
 
-	TFT_setRotation(LANDSCAPE);
+	TFT_setRotation(LANDSCAPE_FLIP);
+//	TFT_setRotation(PORTRAIT_FLIP);
 
 	TFT_setFont(DEJAVU24_FONT, NULL);
 	_fg = TFT_NAVY;
 
-	TFT_print("Hello MOS!", 20, 15);
+	TFT_print("Hello MOS!", 20, 16);
 
     TFT_setGammaCurve(DEFAULT_GAMMA_CURVE);
 
-    TFT_jpg_image(CENTER, CENTER, 1, "mongoose-os.jpg", NULL, 0);
+    TFT_jpg_image(CENTER, CENTER, 1, "test1.jpg", NULL, 0);
 
-    TFT_Button_init(&button1, 200, 16, 100, 32);
-    button1.r = 3;
-    button1.label = btext;
+    TFT_Button_init(&button1, 32, 48, 100, 32);
+    button1.r = 5;
+    button1.label = btext1;
     button1.outlinecolor = &TFT_YELLOW;
-    button1.fillcolor = &TFT_MAGENTA;
+    button1.fillcolor = &TFT_DARKGREY;
     button1.textcolor = &TFT_GREEN;
     TFT_Button_draw(&button1, false);
+	TFT_Button_add_onEvent(&button1, button1_cb);
+
+    TFT_Button_init(&button2, 32, 96, 140, 32);
+    button2.label = btext2;
+    button2.outlinecolor = &TFT_CYAN;
+    button2.fillcolor = &TFT_LIGHTGREY;
+    button2.textcolor = &TFT_RED;
+    button2.font = COMIC24_FONT;
+    TFT_Button_draw(&button2, false);
+	TFT_Button_add_onEvent(&button2, button2_cb);
 
     {
 		char tmp_buff[64];
@@ -219,6 +237,17 @@ void tft_init(void)
 		TFT_print(tmp_buff, 32, 205);
     }
 
+}
+
+
+void button1_cb(bool state)
+{
+	printf("Button1 event %d\n", state);
+}
+
+void button2_cb(bool state)
+{
+	printf("Button2 event %d\n", state);
 }
 
 void mgos_tft_print_date( int x,  int y,  int font);
@@ -244,7 +273,12 @@ void mgos_tft_print_date( int x,  int y,  int font)
 	struct tm* tm_info = localtime(&now);
 	int ms = (int)((mg_now - (int)(mg_now)) * 1000);
 
-	TFT_read_touch(&tx, &ty, 1);
+	if (TFT_read_touch(&tx, &ty, false))
+	{
+		color_t color = { 240, (tm_info->tm_sec & 1)==0 ? 0:240, (tm_info->tm_sec & 1)!=0 ? 0:240 };
+		TFT_drawCircle(tx, ty, 4, color);
+		TFT_checkButtons(tx, ty);
+	}
 
 	if (-1 != font)
 	{
@@ -252,7 +286,7 @@ void mgos_tft_print_date( int x,  int y,  int font)
 	}
 	_fg = TFT_RED;
 
-	printf("mgos_tft_print_date mg_time=%f ms=%d touch(%d,%d)\n", mg_now, ms, tx, ty);
+	printf("mgos_tft_print_date mg_time=%f ms=%d (%d,%d)\n", mg_now, ms, tx, ty);
 
 	sprintf(tmp_buff, "%2d.%2d  %02d:%02d:%02d.%03d", tm_info->tm_mday, 1+tm_info->tm_mon, tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec, ms);
 	TFT_print(tmp_buff, x, y);
