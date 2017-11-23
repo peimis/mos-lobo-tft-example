@@ -81,6 +81,7 @@ libs:
   - origin: https://github.com/mongoose-os-libs/mjs
   - origin: https://github.com/peimis/mos-lobo-spi
   - origin: https://github.com/peimis/mos-lobo-tft
+  - name: tft-touch
 
 # Used by the mos tool to catch mos binaries incompatible with this file format
 manifest_version: 2017-05-18

@@ -3,9 +3,8 @@
 
 #include "mgos.h"
 
-#include "tftspi.h"
 #include "tft.h"
-
+#include "touch.h"
 #include "button.h"
 
 // #include "spiffs_vfs.h"
@@ -65,6 +64,12 @@ void tft_demo(void)
 	// === Pins MUST be initialized before SPI interface initialization ===
 	// ====================================================================
 	TFT_PinsInit();
+	if (-1 != mgos_sys_config_get_tft_bl_pin())
+	{
+		int bl = mgos_sys_config_get_tft_bl_pin();
+		mgos_gpio_set_mode(bl, MGOS_GPIO_MODE_OUTPUT);
+		mgos_gpio_write(bl, 1);
+	}
 
 	// ====  CONFIGURE SPI DEVICES(s)  ====================================================================================
 
